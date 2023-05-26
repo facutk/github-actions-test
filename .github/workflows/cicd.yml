@@ -4,13 +4,16 @@ on:
     branches:
       - main
 jobs:
-  deploy:
-    if: contains(github.event.pull_request.labels.*.name, 'deploy')
-
+  check_pr_labels_job:
     runs-on: ubuntu-latest
-
+    name: A job to check the PR labels contain given labels
     steps:
-    - uses: actions/checkout@v2
-    - name: Run a one-line script
-      run: echo Hello, world!
-
+      - name: Check PR labels action step
+        id: check_pr_labels
+        uses: shioyang/check-pr-labels-on-push-action@v1.0.9
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          labels: '["deploy"]'
+        timeout-minutes: 5
+      - name: See result
+        run: echo "${{ steps.check_pr_labels.outputs.result }}"
