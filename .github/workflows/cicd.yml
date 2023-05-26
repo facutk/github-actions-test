@@ -11,6 +11,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Dump context
+      uses: crazy-max/ghaction-dump-context@v2
+
     - name: Check PR labels action step
       id: check_pr_labels
       uses: shioyang/check-pr-labels-on-push-action@v1.0.9
