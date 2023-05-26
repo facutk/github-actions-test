@@ -4,16 +4,13 @@ on:
     branches:
       - main
 jobs:
-  check_pr_labels_job:
+  dump-github-context:
     runs-on: ubuntu-latest
-    name: A job to check the PR labels contain given labels
+
+    name: Print event
     steps:
-      - name: Check PR labels action step
-        id: check_pr_labels
-        uses: shioyang/check-pr-labels-on-push-action@v1.0.9
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          labels: '["deploy"]'
-        timeout-minutes: 5
-      - name: See result
-        run: echo "${{ steps.check_pr_labels.outputs.result }}"
+    - name: Dump GitHub context
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+      run: |
+        echo "$GITHUB_CONTEXT"
