@@ -26,7 +26,8 @@ jobs:
     # - name: See result
     #   run: echo "${{ steps.check_pr_labels.outputs.result }}"
 
-  job2:
+  deploy:
+    if: needs.check_pr_has_deploy_label.outputs.has_deploy_label == 'true'
     runs-on: ubuntu-latest
     needs: check_pr_has_deploy_label
     steps:
