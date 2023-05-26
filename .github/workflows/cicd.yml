@@ -12,7 +12,7 @@ jobs:
         id: check_pr_labels
         uses: shioyang/check-pr-labels-on-push-action@v1.0.9
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GH_TOKEN }}
           labels: '["deploy"]'
         timeout-minutes: 5
       - name: See result
