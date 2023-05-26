@@ -3,8 +3,7 @@ on:
   push:
     branches:
       - main
-env:
-  GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
 jobs:
   check_pr_has_deploy_label:
     permissions: read-all
@@ -12,8 +11,6 @@ jobs:
     outputs:
       has_deploy_label: ${{ steps.check_pr_labels.outputs.result }}
     steps:
-    # - name: Dump context
-    #   uses: crazy-max/ghaction-dump-context@v2
 
     - name: Check PR labels action step
       id: check_pr_labels
@@ -22,9 +19,6 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         labels: '["deploy"]'
       timeout-minutes: 5
-
-    # - name: See result
-    #   run: echo "${{ steps.check_pr_labels.outputs.result }}"
 
   deploy:
     if: needs.check_pr_has_deploy_label.outputs.has_deploy_label == 'true'
