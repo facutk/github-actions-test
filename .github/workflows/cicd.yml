@@ -7,22 +7,106 @@ on:
 jobs:
   check_pr_has_deploy_label:
     permissions: read-all
+
     runs-on: ubuntu-latest
+
     outputs:
       has_deploy_label: ${{ steps.check_pr_labels.outputs.result }}
+
     steps:
 
-    - name: Check PR labels action step
-      id: check_pr_labels
-      uses: shioyang/check-pr-labels-on-push-action@v1.0.9
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        labels: '["deploy"]'
-      timeout-minutes: 5
+      - name: Check PR labels action step
+        id: check_pr_labels
+        uses: shioyang/check-pr-labels-on-push-action@v1.0.9
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          labels: '["deploy"]'
+        timeout-minutes: 5
 
   deploy:
-    if: needs.check_pr_has_deploy_label.outputs.has_deploy_label == 'true'
-    runs-on: ubuntu-latest
     needs: check_pr_has_deploy_label
+
+    if: needs.check_pr_has_deploy_label.outputs.has_deploy_label == 'true'
+
+    runs-on: ubuntu-latest
+    
     steps:
-    - run: echo ${{ needs.check_pr_has_deploy_label.outputs.has_deploy_label }}
+      - uses: actions/checkout@v2
+
+      # - run: echo ${{ needs.check_pr_has_deploy_label.outputs.has_deploy_label }}
+
+      - id: ip
+        name: get runner ip addresses
+        uses: haythem/public-ip@v1.2
+
+      # - id: install-aws-cli
+      #   uses: unfor19/install-aws-cli-action@v1
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: us-east-2
+
+
+      - name: whitelist runner ip address
+        run: |
+          aws ec2 authorize-security-group-ingress \
+            --group-id $AWS_DEV_BASTION_SG_ID \
+            --protocol tcp \
+            --port 54322 \
+            --cidr ${{ steps.ip.outputs.ipv4 }}/32
+
+      # - uses: actions/setup-java@v3
+      #   with:
+      #     distribution: "temurin"
+      #     java-version: "17"
+
+      # - name: Create WAR file
+      #   run: gradle build
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$CICD_SSH_PRIVATE_KEY" > ~/.ssh/id_rsa_cicd
+          chmod 400 ~/.ssh/id_rsa_cicd
+
+          cat >>~/.ssh/config <<END
+          Host bastion
+            HostName bastion.dev.rockwallet.net
+            Port 54322
+            User cicd
+            IdentityFile ~/.ssh/id_rsa_cicd
+            StrictHostKeyChecking no
+          Host dev
+            HostName 10.0.42.27
+            Port 54322
+            User cicd
+            IdentityFile ~/.ssh/id_rsa_cicd
+            ProxyJump bastion
+            StrictHostKeyChecking no
+          END
+
+      - name: ls files
+        run: |
+          ssh dev "ls -la"
+
+      # # - name: restart tomcat9
+      # #   run: |
+      # #     ssh dev "sudo systemctl restart tomcat9"
+
+      # # - name: scp
+      # #   run: |
+      # #     scp ROOT.war dev:/var/lib/tomcat9/wasp.rockwallet.net/
+
+      - name: revoke runner ip address
+        run: |
+          aws ec2 revoke-security-group-ingress \
+            --group-id $AWS_DEV_BASTION_SG_ID \
+            --protocol tcp \
+            --port 54322 \
+            --cidr ${{ steps.ip.outputs.ipv4 }}/32
+
+      # # - name: Get git rev parse
+      # #   run: echo ::set-env name=GIT_REV::$(git rev-parse --verify --short HEAD)
