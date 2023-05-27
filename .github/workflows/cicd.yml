@@ -4,6 +4,9 @@ on:
     branches:
       - main
 
+env:
+  AWS_DEV_BASTION_SG_ID: ${{ secrets.AWS_DEV_BASTION_SG_ID }}
+
 jobs:
   check_pr_has_deploy_label:
     permissions: read-all
