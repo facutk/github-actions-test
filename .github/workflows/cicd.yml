@@ -6,6 +6,7 @@ on:
 
 env:
   AWS_DEV_BASTION_SG_ID: ${{ secrets.AWS_DEV_BASTION_SG_ID }}
+  CICD_SSH_PRIVATE_KEY: ${{ secrets.CICD_SSH_PRIVATE_KEY }}
 
 jobs:
   check_pr_has_deploy_label:
